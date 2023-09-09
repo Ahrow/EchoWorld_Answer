@@ -4,13 +4,29 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import no.kristiania.echoworld.ui.theme.EchoWorldTheme
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -23,39 +39,85 @@ import okio.ByteString
 
 class MainActivity : ComponentActivity() {
     var client = OkHttpClient()
+    var webSocket: WebSocket? = null
+    var userInput by mutableStateOf("")
 
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val wss_url = "ws://YOUR_IP_ADDRESS_GOES_HERE:8765"
+        val wss_url = "ws://192.168.0.109:8765"
         run(wss_url)
 
+
         setContent {
+            var isButtonClicked by remember { mutableStateOf(false) }
+
             EchoWorldTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting("Echo, World!")
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Button(
+                            onClick = {
+                                isButtonClicked = true
+                            }
+                        ) {
+                            Text("Send msg server")
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateContentSize()
+                        ) {
+                            TextField(
+                                value = userInput,
+                                onValueChange = {
+                                    userInput = it
+                                    isButtonClicked = false // Reset on text change
+                                },
+                                label = {
+                                    Text("Enter a message")
+                                },
+                                modifier = Modifier.fillMaxWidth().padding(16.dp)
+                            )
+
+                            // Display the text when the button is clicked
+                            if (isButtonClicked) {
+                                Text(
+                                    text = userInput,
+                                    modifier = Modifier.padding(16.dp),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                webSocket?.send(userInput)
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 
     fun run(url: String) {
-
-        val wss_request: Request = Builder().url(url).build()
-        val webSocket = OkHttpClient().newWebSocket(wss_request, EchoWebSocketListener())
-
+        val request = Builder().url(url).build()
+        val listener = EchoWebSocketListener()
+        webSocket = OkHttpClient().newWebSocket(request, listener)
     }
 }
 
-private class EchoWebSocketListener : WebSocketListener() {
+private class EchoWebSocketListener() : WebSocketListener() {
     override fun onOpen(webSocket: WebSocket, response: Response) {
-        val messageString = "Mary had a little lamb"
+        // Send the userInput to the WebSocket server
 
-        webSocket.send(messageString)
     }
 
     override fun onMessage(webSocket: WebSocket, text: String) {
