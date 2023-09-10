@@ -54,7 +54,6 @@ class MainActivity : ComponentActivity() {
             var isButtonClicked by remember { mutableStateOf(false) }
 
             EchoWorldTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -83,7 +82,7 @@ class MainActivity : ComponentActivity() {
                                 value = userInput,
                                 onValueChange = {
                                     userInput = it
-                                    isButtonClicked = false // Reset on text change
+                                    isButtonClicked = false
                                 },
                                 label = {
                                     Text("Enter a message")
@@ -91,7 +90,6 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.fillMaxWidth().padding(16.dp)
                             )
 
-                            // Display the text when the button is clicked
                             if (isButtonClicked) {
                                 Text(
                                     text = userInput,
@@ -146,7 +144,6 @@ private class EchoWebSocketListener() : WebSocketListener() {
         Log.v("WSS", txt)
     }
 }
-
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
