@@ -41,6 +41,7 @@ class MainActivity : ComponentActivity() {
     var client = OkHttpClient()
     var webSocket: WebSocket? = null
     var userInput by mutableStateOf("")
+    var serverAnswer by mutableStateOf("")
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -92,7 +93,7 @@ class MainActivity : ComponentActivity() {
 
                             if (isButtonClicked) {
                                 Text(
-                                    text = userInput,
+                                    text = serverAnswer,
                                     modifier = Modifier.padding(16.dp),
                                     style = MaterialTheme.typography.bodyMedium
                                 )
@@ -107,12 +108,12 @@ class MainActivity : ComponentActivity() {
 
     fun run(url: String) {
         val request = Builder().url(url).build()
-        val listener = EchoWebSocketListener()
+        val listener = EchoWebSocketListener(this)
         webSocket = OkHttpClient().newWebSocket(request, listener)
     }
 }
 
-private class EchoWebSocketListener() : WebSocketListener() {
+private class EchoWebSocketListener(private val activity: MainActivity) : WebSocketListener() {
     override fun onOpen(webSocket: WebSocket, response: Response) {
         // Send the userInput to the WebSocket server
 
@@ -142,6 +143,7 @@ private class EchoWebSocketListener() : WebSocketListener() {
 
     private fun output(txt: String) {
         Log.v("WSS", txt)
+        activity.serverAnswer = txt
     }
 }
 
